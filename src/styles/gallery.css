@@ -1,0 +1,93 @@
+/* =========================================
+   GALLERY PAGE
+========================================= */
+
+.gallery-page {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 100px 40px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.gallery-header {
+    width: 100%;
+    max-width: 700px;
+
+    margin-bottom: 100px;
+
+    animation: fadeUp 0.8s ease both;
+}
+
+
+.gallery-header h1 {
+    margin: 0 0 24px;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: clamp(52px, 7vw, 100px);
+
+    font-weight: 500;
+
+    line-height: 1;
+
+    letter-spacing: -0.04em;
+}
+
+
+.gallery-header p:last-child {
+    margin: 0;
+
+    font-size: 15px;
+
+    line-height: 1.7;
+
+    color: var(--muted);
+}
+
+
+/* =========================================
+   GRID
+========================================= */
+
+.gallery-grid {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    column-gap: 20px;
+    row-gap: 45px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 800px) {
+
+    .gallery-page {
+        padding: 80px 20px;
+    }
+
+
+    .gallery-header {
+        margin-bottom: 60px;
+    }
+
+
+    .gallery-grid {
+        grid-template-columns: 1fr;
+
+        row-gap: 45px;
+    }
+
+}

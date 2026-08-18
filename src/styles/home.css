@@ -1,0 +1,310 @@
+/* =========================================
+   HOME
+========================================= */
+
+.home {
+    width: 100%;
+
+    overflow: hidden;
+}
+
+
+/* =========================================
+   HERO
+========================================= */
+
+.hero {
+    width: 100%;
+    max-width: 1400px;
+
+    min-height: 620px;
+
+    margin: 0 auto;
+
+    padding: 100px 40px;
+
+    display: flex;
+    align-items: center;
+}
+
+
+.hero__content {
+    width: 100%;
+    max-width: 700px;
+
+    animation: fadeUp 0.8s ease both;
+}
+
+
+.hero__label {
+    margin: 0 0 24px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    line-height: 1.4;
+
+    letter-spacing: 0.22em;
+
+    color: var(--muted);
+}
+
+
+.hero__title {
+    margin: 0;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: clamp(64px, 9vw, 130px);
+
+    font-weight: 500;
+
+    line-height: 0.95;
+
+    letter-spacing: -0.04em;
+}
+
+
+.hero__description {
+    max-width: 520px;
+
+    margin: 42px 0 0;
+
+    font-size: 16px;
+
+    line-height: 1.8;
+
+    color: var(--muted);
+}
+
+
+/* =========================================
+   FEATURED
+========================================= */
+
+.featured {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 100px 40px;
+}
+
+
+.featured .section-heading {
+    margin-bottom: 60px;
+}
+
+
+.featured__grid {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+.featured__link {
+    margin-top: 50px;
+}
+
+
+.featured__link a {
+    display: inline-flex;
+    align-items: center;
+
+    padding-bottom: 6px;
+
+    border-bottom: 1px solid var(--text);
+
+    font-size: 13px;
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+}
+
+
+.featured__link a:hover {
+    opacity: 0.6;
+
+    transform: translateX(4px);
+}
+
+
+/* =========================================
+   ABOUT
+========================================= */
+
+.about {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 100px 40px;
+
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    gap: 100px;
+
+    align-items: center;
+}
+
+
+.about__content {
+    width: 100%;
+    max-width: 560px;
+}
+
+
+.about__content h2 {
+    margin: 0 0 30px;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: clamp(42px, 5vw, 68px);
+
+    font-weight: 500;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.03em;
+}
+
+
+.about__content p:last-child {
+    margin: 0;
+
+    font-size: 16px;
+
+    line-height: 1.9;
+
+    color: var(--muted);
+}
+
+
+.about__image {
+    width: 100%;
+
+    aspect-ratio: 4 / 5;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--surface);
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    letter-spacing: 0.12em;
+}
+
+
+/* =========================================
+   FIXED IMAGES
+========================================= */
+
+.fixed-images {
+    width: 100%;
+    max-width: 1400px;
+
+    margin: 0 auto;
+
+    padding: 40px;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+
+.fixed-image {
+    width: 100%;
+
+    aspect-ratio: 16 / 10;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--surface);
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    letter-spacing: 0.12em;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 800px) {
+
+    .hero {
+        min-height: 500px;
+
+        padding: 80px 20px;
+    }
+
+
+    .hero__description {
+        margin-top: 32px;
+
+        font-size: 15px;
+    }
+
+
+    .featured {
+        padding: 80px 20px;
+    }
+
+
+    .featured .section-heading {
+        margin-bottom: 45px;
+    }
+
+
+    .featured__grid {
+        grid-template-columns: 1fr;
+
+        gap: 45px;
+    }
+
+
+    .about {
+        padding: 80px 20px;
+
+        grid-template-columns: 1fr;
+
+        gap: 50px;
+    }
+
+
+    .about__content {
+        max-width: none;
+    }
+
+
+    .fixed-images {
+        padding: 20px;
+
+        grid-template-columns: 1fr;
+
+        gap: 20px;
+    }
+
+}

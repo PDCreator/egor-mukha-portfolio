@@ -1,0 +1,387 @@
+/* =========================================
+   LIGHTBOX
+========================================= */
+
+.lightbox {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    width: 100%;
+    height: 100%;
+
+    padding: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(25, 24, 22, 0.94);
+
+    animation: lightboxFadeIn 0.3s ease both;
+}
+
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.lightbox__content {
+    width: 100%;
+    height: 100%;
+
+    max-width: 1400px;
+
+    display: grid;
+
+    grid-template-columns: minmax(0, 1fr) 320px;
+
+    gap: 50px;
+
+    align-items: center;
+
+    animation: lightboxContentIn 0.4s ease both;
+}
+
+
+/* =========================================
+   IMAGE
+========================================= */
+
+.lightbox__image-wrapper {
+    width: 100%;
+    height: 100%;
+
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.lightbox__image {
+    display: block;
+
+    max-width: 100%;
+    max-height: 90vh;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================
+   INFO
+========================================= */
+
+.lightbox__info {
+    width: 100%;
+
+    color: #f4f1eb;
+}
+
+
+.lightbox__info h2 {
+    margin: 0 0 18px;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: clamp(36px, 4vw, 60px);
+
+    font-weight: 500;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.03em;
+}
+
+
+.lightbox__meta {
+    display: flex;
+
+    gap: 15px;
+
+    margin-bottom: 30px;
+
+    font-size: 12px;
+
+    color: rgba(244, 241, 235, 0.55);
+}
+
+
+.lightbox__info p {
+    max-width: 300px;
+
+    margin: 0;
+
+    font-size: 14px;
+
+    line-height: 1.8;
+
+    color: rgba(244, 241, 235, 0.7);
+}
+
+
+/* =========================================
+   CLOSE
+========================================= */
+
+.lightbox__close {
+    position: absolute;
+
+    top: 28px;
+    right: 35px;
+
+    z-index: 10;
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #f4f1eb;
+
+    font-size: 32px;
+
+    font-weight: 300;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+}
+
+
+.lightbox__close:hover {
+    opacity: 0.6;
+
+    transform: rotate(90deg);
+}
+
+
+/* =========================================
+   ARROWS
+========================================= */
+
+.lightbox__arrow {
+    position: absolute;
+
+    top: 50%;
+
+    z-index: 10;
+
+    width: 60px;
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transform: translateY(-50%);
+
+    color: #f4f1eb;
+
+    font-size: 28px;
+    font-weight: 300;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.3s ease;
+}
+
+
+.lightbox__arrow:hover {
+    opacity: 0.55;
+}
+
+
+.lightbox__arrow--left {
+    left: 20px;
+}
+
+
+.lightbox__arrow--left:hover {
+    transform: translate(-4px, -50%);
+}
+
+
+.lightbox__arrow--right {
+    right: 20px;
+}
+
+
+.lightbox__arrow--right:hover {
+    transform: translate(4px, -50%);
+}
+
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
+@keyframes lightboxFadeIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+@keyframes lightboxContentIn {
+
+    from {
+        opacity: 0;
+
+        transform: scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: scale(1);
+    }
+
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+
+    .lightbox {
+        padding: 30px;
+    }
+
+
+    .lightbox__content {
+        grid-template-columns: minmax(0, 1fr) 250px;
+
+        gap: 30px;
+    }
+
+
+    .lightbox__arrow--left {
+        left: 5px;
+    }
+
+
+    .lightbox__arrow--right {
+        right: 5px;
+    }
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .lightbox {
+        padding: 70px 20px 30px;
+    }
+
+
+    .lightbox__content {
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        justify-content: center;
+
+        gap: 25px;
+    }
+
+
+    .lightbox__image-wrapper {
+        height: auto;
+
+        flex: 0 1 auto;
+
+        min-height: 0;
+    }
+
+
+    .lightbox__image {
+        max-width: 100%;
+        max-height: 60vh;
+    }
+
+
+    .lightbox__info {
+        flex-shrink: 0;
+
+        padding: 0 35px;
+    }
+
+
+    .lightbox__info h2 {
+        margin-bottom: 12px;
+
+        font-size: 34px;
+    }
+
+
+    .lightbox__meta {
+        margin-bottom: 15px;
+    }
+
+
+    .lightbox__info p {
+        max-width: none;
+
+        font-size: 13px;
+
+        line-height: 1.6;
+    }
+
+
+    .lightbox__close {
+        top: 15px;
+        right: 18px;
+    }
+
+
+    .lightbox__arrow {
+        top: 38%;
+
+        width: 45px;
+        height: 45px;
+
+        font-size: 24px;
+    }
+
+
+    .lightbox__arrow--left {
+        left: 5px;
+    }
+
+
+    .lightbox__arrow--right {
+        right: 5px;
+    }
+
+}
