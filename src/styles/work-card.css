@@ -1,0 +1,69 @@
+.work-card {
+    cursor: pointer;
+}
+
+
+.work-card__image {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 4 / 5;
+
+    overflow: hidden;
+
+    background: #bdb4a7;
+}
+
+
+.work-card__image img {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition:
+        transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+
+.work-card:hover .work-card__image img {
+    transform: scale(1.035);
+}
+
+
+.work-card__info {
+    padding-top: 15px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+
+.work-card__info h3 {
+    margin: 0;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: 19px;
+
+    font-weight: 400;
+}
+
+
+.work-card__meta {
+    display: flex;
+
+    gap: 10px;
+
+    font-size: 10px;
+
+    opacity: 0.55;
+
+    white-space: nowrap;
+}

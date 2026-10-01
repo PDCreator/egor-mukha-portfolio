@@ -1,22 +1,48 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-import { works } from '../data/works'
+import contentService from '../services/contentService'
+
+import Header from '../components/Header'
 import WorkCard from '../components/WorkCard'
 import Lightbox from '../components/Lightbox'
-
+import Reveal from '../components/Reveal'
 import '../styles/home.css'
 
+
 function Home() {
+  const [content, setContent] = useState(null)
+
   const [activeIndex, setActiveIndex] = useState(null)
 
-  const featuredWorks = works
-    .filter((work) => work.featured)
-    .slice(0, 3)
+
+  useEffect(() => {
+    const loadContent = async () => {
+      const data = await contentService.getContent()
+
+      setContent(data)
+    }
+
+
+    loadContent()
+  }, [])
+
+
+  if (!content) {
+    return (
+      <div className="loading">
+        Загрузка...
+      </div>
+    )
+  }
+
+
+  const featuredWorks = content.works.filter((work) =>
+    content.featuredWorks.includes(work.id)
+  )
 
 
   const openLightbox = (work) => {
-    const index = works.findIndex(
+    const index = content.works.findIndex(
       (item) => item.id === work.id
     )
 
@@ -35,7 +61,10 @@ function Home() {
         return null
       }
 
-      return (currentIndex + 1) % works.length
+      return (
+        (currentIndex + 1) %
+        content.works.length
+      )
     })
   }
 
@@ -47,127 +76,220 @@ function Home() {
       }
 
       return (
-        (currentIndex - 1 + works.length) %
-        works.length
+        (currentIndex - 1 + content.works.length) %
+        content.works.length
       )
     })
   }
 
 
   return (
-    <div className="home">
+    <div
+      className="site"
+      id="top"
+      style={{
+        '--background-image': `url(${content.background.image})`,
+      }}
+    >
 
-      <section className="hero">
-
-        <div className="hero__content">
-
-          <p className="hero__label">
-            СКУЛЬПТОР
-          </p>
-
-          <h1 className="hero__title">
-            Егор Муха
-          </h1>
-
-          <p className="hero__description">
-            Информация о художнике появится здесь.
-            Это временный текст, который позже будет
-            заменён на настоящий.
-          </p>
-
-        </div>
-
-      </section>
+      <Header />
 
 
-      <section className="featured">
+      <main>
 
-        <div className="section-heading">
+        {/* =========================================
+            HERO
+        ========================================= */}
 
-          <p className="section-heading__label">
-            ИЗБРАННЫЕ РАБОТЫ
-          </p>
+        <section className="hero">
 
-          <h2 className="section-heading__title">
-            Из коллекции
-          </h2>
+          <div className="hero__logo">
 
-        </div>
-
-
-        <div className="featured__grid">
-
-          {featuredWorks.map((work) => (
-            <WorkCard
-              key={work.id}
-              work={work}
-              onClick={openLightbox}
+            <img
+              src={content.logo.image}
+              alt={content.logo.alt}
             />
-          ))}
 
-        </div>
-
-
-        <div className="featured__link">
-
-          <Link to="/gallery">
-            Смотреть все работы
-          </Link>
-
-        </div>
-
-      </section>
+          </div>
 
 
-      <section className="about">
-
-        <div className="about__content">
-
-          <p className="section-heading__label">
-            ОБ АВТОРЕ
+          <p className="hero__bio">
+            {content.artist.shortBio}
           </p>
 
-          <h2>
-            Егор Муха
-          </h2>
+        </section>
 
-          <p>
-            Здесь появится информация о Егоре,
-            его творчестве, подходе к работе
-            и художественном направлении.
+
+        {/* =========================================
+            FEATURED WORKS
+        ========================================= */}
+
+        <section className="featured section">
+
+          <div className="section-intro">
+
+            <span className="section-intro__label">
+              Избранное
+            </span>
+
+          </div>
+
+
+          <div className="featured__grid">
+
+            {featuredWorks.map((work) => (
+              <WorkCard
+                key={work.id}
+                work={work}
+                onClick={openLightbox}
+              />
+            ))}
+
+          </div>
+
+        </section>
+
+
+        {/* =========================================
+            GALLERY
+        ========================================= */}
+
+        <section
+          className="gallery section"
+          id="works"
+        >
+          <Reveal>
+            <div className="section-title">
+
+              <span className="section-title__label">
+                Работы
+              </span>
+
+              <h2>
+                Галерея
+              </h2>
+
+            </div>
+          </Reveal>
+          <Reveal>
+            <div className="gallery__grid">
+
+              {content.works.map((work) => (
+                <WorkCard
+                  key={work.id}
+                  work={work}
+                  onClick={openLightbox}
+                />
+              ))}
+
+            </div>
+          </Reveal>
+        </section>
+
+
+        {/* =========================================
+            ABOUT
+        ========================================= */}
+
+        <section
+          className="about section"
+          id="about"
+        >
+
+          <div className="about__portrait">
+
+            <img
+              src={content.artist.portrait}
+              alt={content.artist.name}
+              loading="lazy"
+            />
+
+          </div>
+
+
+          <div className="about__content">
+
+            <span className="section-title__label">
+              Об авторе
+            </span>
+
+            <h2>
+              {content.artist.name}
+            </h2>
+
+
+            <div className="about__text">
+
+              {content.artist.biography
+                .trim()
+                .split('\n')
+                .filter(Boolean)
+                .map((paragraph, index) => (
+                  <p key={index}>
+                    {paragraph.trim()}
+                  </p>
+                ))}
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* =========================================
+            CONTACTS
+        ========================================= */}
+
+        <section
+          className="contacts section"
+          id="contacts"
+        >
+
+          <div className="section-title">
+
+            <span className="section-title__label">
+              Связь
+            </span>
+
+            <h2>
+              {content.contacts.title}
+            </h2>
+
+          </div>
+
+
+          <p className="contacts__text">
+            {content.contacts.text}
           </p>
 
-        </div>
+
+          <div className="contacts__links">
+
+            <a
+              href={`mailto:${content.contacts.email}`}
+            >
+              {content.contacts.email}
+            </a>
 
 
-        <div className="about__image">
-          <span>
-            Фотография
-          </span>
-        </div>
+            <a
+              href={`https://t.me/${content.contacts.telegram.replace('@', '')}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {content.contacts.telegram}
+            </a>
 
-      </section>
+          </div>
 
+        </section>
 
-      <section className="fixed-images">
-
-        <div className="fixed-image">
-          <span>
-            Фотография
-          </span>
-        </div>
-
-        <div className="fixed-image">
-          <span>
-            Фотография
-          </span>
-        </div>
-
-      </section>
+      </main>
 
 
       <Lightbox
-        works={works}
+        works={content.works}
         activeIndex={activeIndex}
         onClose={closeLightbox}
         onNext={nextWork}
@@ -177,5 +299,6 @@ function Home() {
     </div>
   )
 }
+
 
 export default Home

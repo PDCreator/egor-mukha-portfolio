@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 
 import App from './App'
 import './styles/global.css'
-
+import './styles/work-card.css'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
