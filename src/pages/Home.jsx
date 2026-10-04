@@ -37,7 +37,7 @@ function Home() {
 
 
   const featuredWorks = content.works.filter((work) =>
-    work.isPublished !== false && content.featuredWorks.includes(work.id)
+    content.featuredWorks.includes(work.id)
   )
 
 
@@ -108,8 +108,6 @@ function Home() {
             <img
               src={content.logo.image}
               alt={content.logo.alt}
-              decoding="async"
-              fetchPriority="high"
             />
 
           </div>
@@ -204,7 +202,6 @@ function Home() {
               src={content.artist.portrait}
               alt={content.artist.name}
               loading="lazy"
-              decoding="async"
             />
 
           </div>

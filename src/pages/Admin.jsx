@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import contentService from '../services/contentService'
-import { optimizeImage } from '../services/imageOptimizer'
 import '../styles/admin.css'
 
 const emptyWork = {
@@ -15,7 +14,6 @@ const emptyWork = {
   image: '',
   sortOrder: 0,
   isFeatured: false,
-  isPublished: true,
 }
 
 function Admin() {
@@ -25,33 +23,36 @@ function Admin() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [tab, setTab] = useState('dashboard')
+  const [tab, setTab] = useState('works')
   const [works, setWorks] = useState([])
   const [editingWork, setEditingWork] = useState(null)
   const [artist, setArtist] = useState({ name: '', shortBio: '', biography: '', portraitPath: '' })
   const [contacts, setContacts] = useState({ title: 'Контакты', text: '', email: '', telegram: '' })
   const [settings, setSettings] = useState({ logoPath: '', logoAlt: '', backgroundPath: '' })
-  const [draggedId, setDraggedId] = useState(null)
-  const [dragOverId, setDragOverId] = useState(null)
 
   const sortedWorks = useMemo(
     () => [...works].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
     [works],
   )
-  const publishedCount = works.filter((work) => work.isPublished).length
-  const featuredCount = works.filter((work) => work.isFeatured && work.isPublished).length
 
   useEffect(() => {
     let mounted = true
+
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) {
         navigate('/admin/login', { replace: true })
         return
       }
+
       if (!mounted) return
       setSession(data.session)
+
       try {
-        const [loadedWorks, loadedContent] = await Promise.all([contentService.getWorks(), contentService.getContent()])
+        const [loadedWorks, loadedContent] = await Promise.all([
+          contentService.getWorks(),
+          contentService.getContent(),
+        ])
+
         if (!mounted) return
         setWorks(loadedWorks)
         setArtist({
@@ -63,19 +64,21 @@ function Admin() {
         setContacts({ ...loadedContent.contacts })
         setSettings({
           logoPath: loadedContent.logo.logoPath || '',
-          logoAlt: loadedContent.logo.alt || '',
+          logoAlt: loadedContent.logo.alt,
           backgroundPath: loadedContent.background.backgroundPath || '',
         })
       } catch (loadError) {
-        fail(loadError)
+        setError(loadError.message)
       } finally {
         if (mounted) setLoading(false)
       }
     })
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!nextSession) navigate('/admin/login', { replace: true })
       setSession(nextSession)
     })
+
     return () => {
       mounted = false
       listener.subscription.unsubscribe()
@@ -85,8 +88,7 @@ function Admin() {
   const notify = (text) => {
     setMessage(text)
     setError('')
-    window.clearTimeout(window.__adminToastTimer)
-    window.__adminToastTimer = window.setTimeout(() => setMessage(''), 2800)
+    window.setTimeout(() => setMessage(''), 2500)
   }
 
   const fail = (loadError) => {
@@ -97,37 +99,35 @@ function Admin() {
 
   const upload = async (file, folder) => {
     if (!file) return null
-    const optimized = await optimizeImage(file, {
-      maxDimension: folder === 'works' ? 1800 : folder === 'artist' ? 1600 : 2200,
-      quality: folder === 'works' ? 0.82 : 0.84,
-    })
-    return contentService.uploadImage(optimized, folder)
+    return contentService.uploadImage(file, folder)
   }
 
   const saveWork = async (event) => {
     event.preventDefault()
     setSaving(true)
     setError('')
-    let uploadedPath = null
+
     try {
       const file = event.currentTarget.elements.image.files[0]
       let imagePath = editingWork.imagePath
       const oldImagePath = imagePath
-      if (file) {
-        uploadedPath = await upload(file, 'works')
-        imagePath = uploadedPath
-      }
+
+      if (file) imagePath = await upload(file, 'works')
       if (!imagePath) throw new Error('Для работы нужно выбрать изображение.')
+
       const saved = await contentService.saveWork({ ...editingWork, imagePath })
       setWorks((current) => {
         const exists = current.some((item) => item.id === saved.id)
         return exists ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]
       })
       setEditingWork(null)
-      if (file && oldImagePath && oldImagePath !== imagePath) await contentService.removeImage(oldImagePath)
+
+      if (file && oldImagePath && oldImagePath !== imagePath) {
+        await contentService.removeImage(oldImagePath)
+      }
+
       notify('Работа сохранена')
     } catch (saveError) {
-      if (uploadedPath) await contentService.removeImage(uploadedPath)
       fail(saveError)
     } finally {
       setSaving(false)
@@ -135,8 +135,8 @@ function Admin() {
   }
 
   const deleteWork = async (work) => {
-    if (!window.confirm(`Удалить «${work.title}»? Это удалит запись и изображение из Storage.`)) return
-    setSaving(true)
+    if (!window.confirm(`Удалить «${work.title}»?`)) return
+
     try {
       await contentService.deleteWork(work)
       setWorks((current) => current.filter((item) => item.id !== work.id))
@@ -144,28 +144,22 @@ function Admin() {
       notify('Работа удалена')
     } catch (deleteError) {
       fail(deleteError)
-    } finally {
-      setSaving(false)
     }
   }
 
-  const reorderWorks = async (fromId, toId) => {
-    if (!fromId || !toId || fromId === toId) return
+  const moveWork = async (index, direction) => {
+    const target = index + direction
+    if (target < 0 || target >= sortedWorks.length) return
+
     const next = [...sortedWorks]
-    const fromIndex = next.findIndex((work) => work.id === fromId)
-    const toIndex = next.findIndex((work) => work.id === toId)
-    if (fromIndex < 0 || toIndex < 0) return
-    const [moved] = next.splice(fromIndex, 1)
-    next.splice(toIndex, 0, moved)
-    const normalized = next.map((work, index) => ({ ...work, sortOrder: index }))
-    setWorks(normalized)
-    setDragOverId(null)
+    ;[next[index], next[target]] = [next[target], next[index]]
+    next.forEach((work, order) => { work.sortOrder = order })
+    setWorks(next)
+
     try {
-      await contentService.saveOrder(normalized)
-      notify('Порядок сохранён')
+      await contentService.saveOrder(next)
     } catch (orderError) {
       fail(orderError)
-      try { setWorks(await contentService.getWorks()) } catch (_) { /* keep local state */ }
     }
   }
 
@@ -176,17 +170,9 @@ function Admin() {
       const file = event.currentTarget.elements.portrait.files[0]
       let portraitPath = artist.portraitPath
       const oldPath = portraitPath
-      let uploadedPath = null
-      if (file) {
-        uploadedPath = await upload(file, 'artist')
-        portraitPath = uploadedPath
-      }
-      try {
-        await contentService.saveArtist({ ...artist, portraitPath })
-      } catch (saveError) {
-        if (uploadedPath) await contentService.removeImage(uploadedPath)
-        throw saveError
-      }
+      if (file) portraitPath = await upload(file, 'artist')
+
+      await contentService.saveArtist({ ...artist, portraitPath })
       setArtist((current) => ({ ...current, portraitPath }))
       if (file && oldPath && oldPath !== portraitPath) await contentService.removeImage(oldPath)
       notify('Данные автора сохранены')
@@ -213,27 +199,17 @@ function Admin() {
   const saveSettings = async (event) => {
     event.preventDefault()
     setSaving(true)
-    let uploadedPaths = []
     try {
       const files = event.currentTarget.elements
       let logoPath = settings.logoPath
       let backgroundPath = settings.backgroundPath
       const oldLogo = logoPath
       const oldBackground = backgroundPath
-      if (files.logo.files[0]) {
-        logoPath = await upload(files.logo.files[0], 'site')
-        uploadedPaths.push(logoPath)
-      }
-      if (files.background.files[0]) {
-        backgroundPath = await upload(files.background.files[0], 'site')
-        uploadedPaths.push(backgroundPath)
-      }
-      try {
-        await contentService.saveSettings({ ...settings, logoPath, backgroundPath })
-      } catch (saveError) {
-        await Promise.all(uploadedPaths.map((path) => contentService.removeImage(path)))
-        throw saveError
-      }
+
+      if (files.logo.files[0]) logoPath = await upload(files.logo.files[0], 'site')
+      if (files.background.files[0]) backgroundPath = await upload(files.background.files[0], 'site')
+
+      await contentService.saveSettings({ ...settings, logoPath, backgroundPath })
       setSettings((current) => ({ ...current, logoPath, backgroundPath }))
       if (oldLogo && oldLogo !== logoPath) await contentService.removeImage(oldLogo)
       if (oldBackground && oldBackground !== backgroundPath) await contentService.removeImage(oldBackground)
@@ -268,72 +244,52 @@ function Admin() {
 
         <nav className="admin-tabs">
           {[
-            ['dashboard', 'Обзор'],
             ['works', 'Работы'],
             ['artist', 'Об авторе'],
             ['contacts', 'Контакты'],
             ['settings', 'Настройки'],
           ].map(([key, label]) => (
-            <button key={key} className={tab === key ? 'is-active' : ''} onClick={() => setTab(key)}>{label}</button>
+            <button
+              key={key}
+              className={tab === key ? 'is-active' : ''}
+              onClick={() => setTab(key)}
+            >
+              {label}
+            </button>
           ))}
         </nav>
 
-        {message && <div className="admin-message">✓ {message}</div>}
+        {message && <div className="admin-message">{message}</div>}
         {error && <div className="admin-error">{error}</div>}
-
-        {tab === 'dashboard' && (
-          <section className="admin-section">
-            <div className="admin-section__head">
-              <div><div className="admin-eyebrow">Состояние</div><h2>Обзор</h2></div>
-            </div>
-            <div className="admin-stats">
-              <button className="admin-stat" onClick={() => setTab('works')}>
-                <span>Всего работ</span><strong>{works.length}</strong><small>Открыть галерею →</small>
-              </button>
-              <button className="admin-stat" onClick={() => setTab('works')}>
-                <span>Опубликовано</span><strong>{publishedCount}</strong><small>Видны на сайте →</small>
-              </button>
-              <button className="admin-stat" onClick={() => setTab('works')}>
-                <span>Избранное</span><strong>{featuredCount}</strong><small>На главном экране →</small>
-              </button>
-            </div>
-            <div className="admin-dashboard-note">
-              <strong>Подсказка</strong>
-              <p>Перетаскивай работы мышкой, чтобы менять порядок. Снятая публикация остаётся в админке, но исчезает с публичного сайта.</p>
-            </div>
-          </section>
-        )}
 
         {tab === 'works' && (
           <section className="admin-section">
             <div className="admin-section__head">
-              <div><div className="admin-eyebrow">Галерея</div><h2>Работы</h2></div>
-              <button className="admin-button admin-button--primary" onClick={() => setEditingWork({ ...emptyWork, sortOrder: works.length })}>+ Добавить работу</button>
+              <div>
+                <div className="admin-eyebrow">Галерея</div>
+                <h2>Работы</h2>
+              </div>
+              <button className="admin-button admin-button--primary" onClick={() => setEditingWork({ ...emptyWork, sortOrder: works.length })}>
+                + Добавить работу
+              </button>
             </div>
-            <p className="admin-hint">Перетаскивай карточки мышкой для изменения порядка.</p>
+
             <div className="admin-work-list">
-              {sortedWorks.map((work) => (
-                <article
-                  className={`admin-work-row ${dragOverId === work.id ? 'is-drag-over' : ''} ${draggedId === work.id ? 'is-dragging' : ''}`}
-                  key={work.id}
-                  draggable
-                  onDragStart={() => setDraggedId(work.id)}
-                  onDragEnd={() => { setDraggedId(null); setDragOverId(null) }}
-                  onDragOver={(event) => { event.preventDefault(); if (dragOverId !== work.id) setDragOverId(work.id) }}
-                  onDrop={(event) => { event.preventDefault(); reorderWorks(draggedId, work.id); setDraggedId(null) }}
-                >
+              {sortedWorks.map((work, index) => (
+                <article className="admin-work-row" key={work.id}>
                   <img src={work.image} alt="" />
                   <div className="admin-work-row__main">
-                    <strong>{work.title || 'Без названия'}</strong>
-                    <span>{work.material || 'Материал не указан'}{work.year ? ` · ${work.year}` : ''}</span>
+                    <strong>{work.title}</strong>
+                    <span>{work.material}{work.year ? ` · ${work.year}` : ''}</span>
                   </div>
-                  <div className="admin-work-badges">
-                    <span className={`admin-badge ${work.isPublished ? 'is-published' : 'is-hidden'}`}>{work.isPublished ? 'Опубликовано' : 'Скрыто'}</span>
-                    {work.isFeatured && <span className="admin-badge is-featured">Избранное</span>}
-                  </div>
+                  <span className={`admin-badge ${work.isFeatured ? 'is-featured' : ''}`}>
+                    {work.isFeatured ? 'Избранное' : 'Обычная'}
+                  </span>
                   <div className="admin-row-actions">
+                    <button onClick={() => moveWork(index, -1)} disabled={index === 0}>↑</button>
+                    <button onClick={() => moveWork(index, 1)} disabled={index === sortedWorks.length - 1}>↓</button>
                     <button onClick={() => setEditingWork({ ...work })}>Изменить</button>
-                    <button className="is-danger" onClick={() => deleteWork(work)} disabled={saving}>Удалить</button>
+                    <button className="is-danger" onClick={() => deleteWork(work)}>Удалить</button>
                   </div>
                 </article>
               ))}
@@ -356,12 +312,10 @@ function Admin() {
         {tab === 'contacts' && (
           <form className="admin-form" onSubmit={saveContacts}>
             <div className="admin-section__head"><div><div className="admin-eyebrow">Связь</div><h2>Контакты</h2></div></div>
-            <Field label="Заголовок"><input value={contacts.title} onChange={(e) => setContacts({ ...contacts, title: e.target.value })} /></Field>
-            <Field label="Текст"><textarea rows="5" value={contacts.text} onChange={(e) => setContacts({ ...contacts, text: e.target.value })} /></Field>
-            <div className="admin-form__grid">
-              <Field label="Email"><input type="email" value={contacts.email} onChange={(e) => setContacts({ ...contacts, email: e.target.value })} /></Field>
-              <Field label="Telegram"><input value={contacts.telegram} onChange={(e) => setContacts({ ...contacts, telegram: e.target.value })} placeholder="@username" /></Field>
-            </div>
+            <Field label="Заголовок"><input value={contacts.title} onChange={(e) => setContacts({ ...contacts, title: e.target.value })} required /></Field>
+            <Field label="Текст"><textarea rows="6" value={contacts.text} onChange={(e) => setContacts({ ...contacts, text: e.target.value })} /></Field>
+            <Field label="Email"><input type="email" value={contacts.email} onChange={(e) => setContacts({ ...contacts, email: e.target.value })} /></Field>
+            <Field label="Telegram"><input value={contacts.telegram} onChange={(e) => setContacts({ ...contacts, telegram: e.target.value })} placeholder="@username" /></Field>
             <button className="admin-button admin-button--primary" disabled={saving}>{saving ? 'Сохранение...' : 'Сохранить'}</button>
           </form>
         )}
@@ -377,54 +331,30 @@ function Admin() {
         )}
       </div>
 
-      {editingWork && <WorkModal work={editingWork} saving={saving} onChange={setEditingWork} onClose={() => setEditingWork(null)} onSubmit={saveWork} />}
+      {editingWork && (
+        <div className="admin-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setEditingWork(null)}>
+          <form className="admin-modal" onSubmit={saveWork}>
+            <div className="admin-section__head">
+              <div><div className="admin-eyebrow">Галерея</div><h2>{editingWork.id ? 'Редактировать' : 'Новая работа'}</h2></div>
+              <button type="button" className="admin-modal__close" onClick={() => setEditingWork(null)}>×</button>
+            </div>
+            <Field label="Название"><input value={editingWork.title} onChange={(e) => setEditingWork({ ...editingWork, title: e.target.value })} required /></Field>
+            <div className="admin-form__grid">
+              <Field label="Год"><input type="number" value={editingWork.year} onChange={(e) => setEditingWork({ ...editingWork, year: e.target.value })} /></Field>
+              <Field label="Порядок"><input type="number" value={editingWork.sortOrder} onChange={(e) => setEditingWork({ ...editingWork, sortOrder: e.target.value })} /></Field>
+            </div>
+            <Field label="Материал"><input value={editingWork.material} onChange={(e) => setEditingWork({ ...editingWork, material: e.target.value })} /></Field>
+            <Field label="Описание"><textarea rows="8" value={editingWork.description} onChange={(e) => setEditingWork({ ...editingWork, description: e.target.value })} /></Field>
+            <ImageField label="Изображение" name="image" currentPath={editingWork.imagePath} required={!editingWork.imagePath} />
+            <label className="admin-checkbox"><input type="checkbox" checked={editingWork.isFeatured} onChange={(e) => setEditingWork({ ...editingWork, isFeatured: e.target.checked })} /> Показывать в избранном</label>
+            <div className="admin-modal__actions">
+              <button type="button" className="admin-button" onClick={() => setEditingWork(null)}>Отмена</button>
+              <button className="admin-button admin-button--primary" disabled={saving}>{saving ? 'Сохранение...' : 'Сохранить'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </main>
-  )
-}
-
-function WorkModal({ work, saving, onChange, onClose, onSubmit }) {
-  const [preview, setPreview] = useState(work.image || '')
-  const inputRef = useRef(null)
-
-  useEffect(() => {
-    setPreview(work.image || '')
-  }, [work.id, work.image])
-
-  const onFileChange = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    setPreview(url)
-  }
-
-  return (
-    <div className="admin-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <form className="admin-modal" onSubmit={onSubmit}>
-        <div className="admin-section__head">
-          <div><div className="admin-eyebrow">Галерея</div><h2>{work.id ? 'Редактировать' : 'Новая работа'}</h2></div>
-          <button type="button" className="admin-modal__close" onClick={onClose}>×</button>
-        </div>
-        <div className="admin-image-preview">
-          {preview ? <img src={preview} alt="Предпросмотр" /> : <span>Выберите изображение</span>}
-          <button type="button" onClick={() => inputRef.current?.click()}>{work.imagePath ? 'Заменить изображение' : 'Выбрать изображение'}</button>
-        </div>
-        <input ref={inputRef} className="admin-hidden-file" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" required={!work.imagePath} onChange={onFileChange} />
-        {work.imagePath && <code className="admin-path">{work.imagePath}</code>}
-        <Field label="Название"><input value={work.title} onChange={(e) => onChange({ ...work, title: e.target.value })} required /></Field>
-        <div className="admin-form__grid">
-          <Field label="Год"><input type="number" value={work.year} onChange={(e) => onChange({ ...work, year: e.target.value })} /></Field>
-          <Field label="Порядок"><input type="number" value={work.sortOrder} onChange={(e) => onChange({ ...work, sortOrder: e.target.value })} /></Field>
-        </div>
-        <Field label="Материал"><input value={work.material} onChange={(e) => onChange({ ...work, material: e.target.value })} /></Field>
-        <Field label="Описание"><textarea rows="8" value={work.description} onChange={(e) => onChange({ ...work, description: e.target.value })} /></Field>
-        <label className="admin-checkbox"><input type="checkbox" checked={work.isPublished} onChange={(e) => onChange({ ...work, isPublished: e.target.checked, isFeatured: e.target.checked ? work.isFeatured : false })} /> Показывать работу на сайте</label>
-        <label className="admin-checkbox"><input type="checkbox" checked={work.isFeatured} onChange={(e) => onChange({ ...work, isFeatured: e.target.checked })} disabled={!work.isPublished} /> Показывать в избранном</label>
-        <div className="admin-modal__actions">
-          <button type="button" className="admin-button" onClick={onClose}>Отмена</button>
-          <button className="admin-button admin-button--primary" disabled={saving}>{saving ? 'Сохранение...' : 'Сохранить'}</button>
-        </div>
-      </form>
-    </div>
   )
 }
 
@@ -432,25 +362,12 @@ function Field({ label, children }) {
   return <label className="admin-field"><span>{label}</span>{children}</label>
 }
 
-function ImageField({ label, name, currentPath }) {
-  const [preview, setPreview] = useState(currentPath ? contentService.publicImageUrl(currentPath) : '')
-
-  const onFileChange = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-    setPreview(URL.createObjectURL(file))
-  }
-
+function ImageField({ label, name, currentPath, required = false }) {
   return (
     <div className="admin-field">
       <span>{label}</span>
-      {preview ? (
-        <div className="admin-small-preview">
-          <img src={preview} alt="Предпросмотр" />
-        </div>
-      ) : null}
       {currentPath && <code className="admin-path">{currentPath}</code>}
-      <input name={name} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={onFileChange} />
+      <input name={name} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" required={required} />
     </div>
   )
 }

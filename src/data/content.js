@@ -5,7 +5,7 @@ const content = {
     shortBio:
       'Молодой скульптор. Информация об авторе появится здесь.',
 
-    portrait: '/images/portrait.webp',
+    portrait: '/images/portrait.jpg',
 
     biography: `
       Здесь будет размещена подробная биография Егора Мухи.
@@ -19,13 +19,13 @@ const content = {
 
 
   logo: {
-    image: '/images/logo.webp',
+    image: '/images/logo.png',
     alt: 'Егор Муха',
   },
 
 
   background: {
-    image: '/images/background.webp',
+    image: '/images/background.jpg',
   },
 
 
@@ -43,7 +43,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-01.webp',
+      image: '/images/works/work-01.jpg',
     },
 
     {
@@ -52,7 +52,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-02.webp',
+      image: '/images/works/work-02.jpg',
     },
 
     {
@@ -61,7 +61,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-03.webp',
+      image: '/images/works/work-03.jpg',
     },
 
     {
@@ -70,7 +70,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-04.webp',
+      image: '/images/works/work-04.jpg',
     },
 
     {
@@ -79,7 +79,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-05.webp',
+      image: '/images/works/work-05.jpg',
     },
 
     {
@@ -88,7 +88,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-06.webp',
+      image: '/images/works/work-06.jpg',
     },
 
     {
@@ -97,7 +97,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-07.webp',
+      image: '/images/works/work-07.jpg',
     },
 
     {
@@ -106,7 +106,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-08.webp',
+      image: '/images/works/work-08.jpg',
     },
 
     {
@@ -115,7 +115,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-09.webp',
+      image: '/images/works/work-09.jpg',
     },
 
     {
@@ -124,7 +124,7 @@ const content = {
       year: '2026',
       material: 'Материал',
       description: 'Описание работы.',
-      image: '/images/works/work-10.webp',
+      image: '/images/works/work-10.jpg',
     },
   ],
 
