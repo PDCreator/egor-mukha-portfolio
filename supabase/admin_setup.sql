@@ -118,3 +118,40 @@ select * from (values
   ('Работа 10', 2026, 'Материал', 'Описание работы.', '/images/works/work-10.jpg', 9, false)
 ) as seed(title, year, material, description, image_path, sort_order, is_featured)
 where not exists (select 1 from public.works);
+
+-- ============================================================
+-- 4. CMS maintenance fields.
+--    Run this section if the tables already existed before the CMS update.
+-- ============================================================
+
+alter table public.artist add column if not exists updated_at timestamp with time zone not null default now();
+alter table public.contacts add column if not exists updated_at timestamp with time zone not null default now();
+alter table public.site_settings add column if not exists updated_at timestamp with time zone not null default now();
+alter table public.works add column if not exists updated_at timestamp with time zone not null default now();
+alter table public.works add column if not exists is_published boolean not null default true;
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists artist_set_updated_at on public.artist;
+create trigger artist_set_updated_at before update on public.artist
+for each row execute function public.set_updated_at();
+
+drop trigger if exists contacts_set_updated_at on public.contacts;
+create trigger contacts_set_updated_at before update on public.contacts
+for each row execute function public.set_updated_at();
+
+drop trigger if exists site_settings_set_updated_at on public.site_settings;
+create trigger site_settings_set_updated_at before update on public.site_settings
+for each row execute function public.set_updated_at();
+
+drop trigger if exists works_set_updated_at on public.works;
+create trigger works_set_updated_at before update on public.works
+for each row execute function public.set_updated_at();

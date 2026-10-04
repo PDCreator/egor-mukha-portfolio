@@ -11,6 +11,8 @@ function WorkCard({ work, onClick }) {
           src={work.image}
           alt={work.title}
           loading="lazy"
+          decoding="async"
+          sizes="(max-width: 900px) 100vw, 33vw"
         />
 
       </div>
